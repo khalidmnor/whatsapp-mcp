@@ -1,0 +1,586 @@
+{
+  "name": "OC | Send Photos Guna Wasapmatic",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful AI product assistant named **SnoziBot**. You assist customers on WhatsApp with questions about the health supplement product **SNOZI** (a botanical beverage mix of raspberry, lemon, and ashwagandha), and help them make a purchase decision or handle customer service issues.\n\nYou will be given customer input: {{ $json.body['data[message]'] }}\n\n---\n\n🧠 **Intent Classification (Automation Purposes)**\n\nDetect the intent behind the message. Use one of these values only:\n\n- `\"halal\"` → Asking about halal certificate or halal status\n- `\"kkm\"` → Asking about KKM approval, health safety\n- `\"qr\"` → Asking how to pay, QR code, payment instructions\n- `\"testimoni\"` → Asking for testimonials, reviews, feedback, or sending testimonials\n- `\"produkinfo\"` → Asking for brochure, full product details or documents\n- `\"product_question\"` → Image or message refers to asking something about the product\n- `\"offtopic\"` → Not related to product or sales\n- `\"unclear\"` → Cannot determine intent\n- `\"tiktok\"` → Asking about TikTok or availability on other platforms\n- `\"general\"` → All other general product or purchase questions\n\n---\n\n🧠 **Special Instruction**\n\nIf the intent is any of these:\n- `halal`, `kkm`, `qr`, `testimoni`, `produkinfo`\n\n**DO NOT** use external tools or databases to generate the reply. Just acknowledge the question. The system will auto-send the related file (image or document) via automation.\n\n---\n\n💬 **Response Format**\n\nReturn your answer as a JSON array with this exact format:\n\n```json\n[\n  {\n    \"output\": \"Reply in casual Bahasa Melayu...\\n\\n```json\\n{\\n  \\\"intent\\\": \\\"testimoni\\\"\\n}\\n```\"\n  }\n]\n\n✅ DO:\n\t•\tReply in casual Bahasa Melayu\n\t•\tUse a friendly WhatsApp tone\n\t•\tAppend the intent block exactly as shown\n\t•\tOnly include the intent inside the json block (no response key)\n\t•\tFormat as a JSON array with key output on the outer level\n\n❌ DO NOT:\n\t•\tWrap the whole response in backticks\n\t•\tUse markdown formatting\n\t•\tReturn markdown code blocks (json inside json)\n\t•\tAdd any other structure outside of the example above\n\nToday’s date: {{ $today.format('yyyy-MM-dd') }}\n",
+        "options": {
+          "systemMessage": "You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        200,
+        -40
+      ],
+      "id": "312e4e6f-e6c0-411c-a7a1-60193712b79b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        180
+      ],
+      "id": "9252187a-a6b4-478c-a47d-47d7058882dd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body[\"data[phone]\"] }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        280,
+        180
+      ],
+      "id": "99aeddd4-65aa-48a9-bf1f-ccbd1688e848",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "name": "snozidb",
+        "description": "This vector store contains product knowledge, FAQs, testimonials, and structured metadata for SNOZI — a natural supplement drink designed to improve sleep quality, reduce stress, and calm the mind."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        400,
+        180
+      ],
+      "id": "0e858a3e-fd87-4378-8a5f-22d491e8f2cc",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "snozidb",
+          "mode": "list",
+          "cachedResultName": "snozidb"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        300,
+        380
+      ],
+      "id": "83365226-3e8c-45c7-80c1-a93ff02a1f17",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "GmvF0NOr2xrKQU6j",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        580
+      ],
+      "id": "18b6637d-023a-48e6-a99d-8153538b9552",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        600,
+        380
+      ],
+      "id": "9d372895-911d-4e22-8d61-037989952b34",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wasapmatic/receive-message",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        -40
+      ],
+      "id": "d31636b3-e7c5-4faf-b6ac-a2171b117ef4",
+      "name": "Webhook1",
+      "webhookId": "c9af1ac5-a536-4a20-b215-3377fff758ab"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.wasapmatic.com/api/send/whatsapp",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "secret",
+              "value": "c0c39be9d421dff225234a987e9f2e47b7a2b5bc"
+            },
+            {
+              "name": "account",
+              "value": "174659061005049e90fa4f5039a8cadc6acbb4b2cc681adb9225ed9"
+            },
+            {
+              "name": "recipient",
+              "value": "={{ $('Webhook1').item.json.body['data[phone]'] }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        140
+      ],
+      "id": "10b19152-6860-4630-96de-4ddffdef056d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input from N8N item\nconst input = items[0].json.output;\n\n// Step 1: Parse the inner string as JSON\nconst innerArray = JSON.parse(input);\n\n// Step 2: Extract full output text\nconst fullOutput = innerArray[0].output;\n\n// Step 3: Extract intent from embedded JSON\nconst intentMatch = fullOutput.match(/```json\\s*({[^`]+})\\s*```/);\n\nlet intent = null;\nif (intentMatch) {\n  const intentJson = JSON.parse(intentMatch[1]);\n  intent = intentJson.intent;\n}\n\n// Step 4: Clean the output (remove JSON block)\nconst cleanOutput = fullOutput.replace(/```json\\s*{[^`]+}\\s*```/, '').trim();\n\n// Return properly formatted result\nreturn [\n  {\n    json: {\n      output: cleanOutput,\n      intent: intent\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -40
+      ],
+      "id": "f20f8c45-5644-428f-b309-d6dd4a0fff32",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ea74e95b-6cf5-4ef1-9461-99cd4161d378",
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "^halal$|^kkm$|^qr$|^testimoni$|^produkinfo$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        -40
+      ],
+      "id": "e13b571a-a00d-40ae-9046-b54be777be00",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1hoQUXA3FvHBIJHnMf9fKuIW1ANy2OeaNFjV5K9778TQ",
+          "mode": "list",
+          "cachedResultName": "Snozi File Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hoQUXA3FvHBIJHnMf9fKuIW1ANy2OeaNFjV5K9778TQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hoQUXA3FvHBIJHnMf9fKuIW1ANy2OeaNFjV5K9778TQ/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "intent",
+              "lookupValue": "={{ $json.intent }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        -140
+      ],
+      "id": "6edf6271-fd41-4235-bd11-d6d15bdd88a0",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "M7s2JXNea8DPuoWc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1220,
+        -140
+      ],
+      "id": "ccfe206a-52f4-416a-974a-68a399238d73",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "sZTdbifJ0leNcRjg",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.wasapmatic.com/api/send/whatsapp",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "secret",
+              "value": "c0c39be9d421dff225234a987e9f2e47b7a2b5bc"
+            },
+            {
+              "name": "account",
+              "value": "174659061005049e90fa4f5039a8cadc6acbb4b2cc681adb9225ed9"
+            },
+            {
+              "name": "recipient",
+              "value": "={{ $('Webhook1').item.json.body['data[phone]'] }}"
+            },
+            {
+              "name": "type",
+              "value": "media"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "media_file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        -120
+      ],
+      "id": "af3f19d9-3588-482d-8727-074e63f90525",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        -140
+      ],
+      "id": "75ae6e50-e629-433a-b37d-a8f669a737a9",
+      "name": "Loop Over Items"
+    }
+  ],
+  "pinData": {
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "host": "ringtail-assured-separately.ngrok-free.app",
+            "user-agent": "GuzzleHttp/7",
+            "content-length": "219",
+            "content-type": "application/x-www-form-urlencoded",
+            "x-forwarded-for": "46.250.236.19",
+            "x-forwarded-host": "ringtail-assured-separately.ngrok-free.app",
+            "x-forwarded-proto": "https",
+            "accept-encoding": "gzip"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "secret": "5603b7145bc69dc0fe47e16243563a94eb178c68",
+            "type": "whatsapp",
+            "data[id]": "1208645",
+            "data[wid]": "+60128758776",
+            "data[phone]": "+60166618159",
+            "data[message]": "Ada sijil testimoni tak?",
+            "data[attachment]": "0",
+            "data[timestamp]": "1747207736"
+          },
+          "webhookUrl": "https://ringtail-assured-separately.ngrok-free.app/webhook-test/wasapmatic/receive-message",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "86c2ad26-8e5a-4366-8472-166888e2d297",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26eab052ee485494e8bc1c42039419456163d795294cb2611baeb7b14d8d10ac"
+  },
+  "id": "SavWNklQHqxop3Wt",
+  "tags": [
+    {
+      "createdAt": "2025-04-14T06:13:21.034Z",
+      "updatedAt": "2025-04-14T06:13:21.034Z",
+      "id": "rYerDOtuyCWzm9dV",
+      "name": "onlinecourse"
+    }
+  ]
+}
