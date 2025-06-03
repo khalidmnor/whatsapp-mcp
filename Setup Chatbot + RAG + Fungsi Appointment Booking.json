@@ -1,0 +1,448 @@
+{
+  "name": "OC | Bomstart RAG Guna Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI assistant for a Telegram chatbot. Your job is to respond to the user's message in a friendly, helpful, and concise way.\n\nBased on user input: {{ $('Telegram Trigger').item.json.message.text }}, please generate a helpful reply.\n\nIf you're unsure how to respond, use the `onlinecourse` tool to search the vector store for relevant context before replying.\n\n---\n\nSpecial Instruction:  \nIf the user wants to book or set an appointment (examples: \"Can I book a slot?\", \"Saya nak buat appointment\", \"Available tak esok pukul 3?\", etc).\n\nExtract the following fields from this user message:\n\n- Full name\n- Email\n- Phone Number\n- Date & Time\n- Appointment Topic\n\n{\n  \"Full name\": \"\",\n  \"email\": \"\",\n  \"Phone Number\": \"\",\n  \"date\": \"\",\n  \"time\": \"\",\n  \"Appointment Topic\": \"\"\n}\n\nAnd then use Googel Calendar Tool to create event for this appointment request.\n\nSend a confirmation email url to the user using the email address above using gmail tool and also reply with the appointment details to the user.\n\n🧠 Confirmation Instruction:\nNever calculate the appointment date or time on your own.\n\nInstead, always refer to the confirmed `datetime` value that was successfully sent to Google Calendar. This value is final and authoritative.\n\nFormat the confirmation message using that datetime (convert to Malaysia time, and display in user-friendly format, e.g., \"7 May 2025, 3:00 PM\").\n\n🕒 System Context:\n- Your current time zone is **Asia/Kuala_Lumpur (UTC+8)**.\n- Today’s date is: {{ new Date().toISOString().slice(0, 10) }} (in ISO format, YYYY-MM-DD).\n- When interpreting dates like \"esok\", \"lusa\", \"next Friday\", or \"tomorrow\", always refer to **Kuala Lumpur local time**.\n- Assume all relative time expressions are based on today's date in Kuala Lumpur.\n- The appointment is 30 minutes long unless stated otherwise.\n",
+        "options": {
+          "systemMessage": "You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        400,
+        -40
+      ],
+      "id": "897b78d3-0edf-4b62-ad90-aa6b92f9d35b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        200
+      ],
+      "id": "4a181f18-ade5-4e32-b805-7db7f425e540",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.text }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        200
+      ],
+      "id": "df074393-4ab9-434c-b6a8-7570266d053c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "name": "onlinecourse",
+        "description": "Call this tool to access information on pinecone to answer user question"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        560,
+        180
+      ],
+      "id": "93d40123-88b6-4a1e-9a3a-a235bc5d52c6",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "onlinecourse",
+          "mode": "list",
+          "cachedResultName": "onlinecourse"
+        },
+        "options": {
+          "pineconeNamespace": "onlinecourse"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        360
+      ],
+      "id": "d7c744fa-cb35-4ec5-883e-d23d182cd28f",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "N6r9cn4DbeJDuAJv",
+          "name": "PineconeApi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        520
+      ],
+      "id": "fdcd6b92-351f-4e9d-a8c1-f5d4530565b0",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        360
+      ],
+      "id": "ac1547d1-10e0-4309-94c9-58330781da69",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        -40
+      ],
+      "id": "8c505951-93d3-40bf-bb65-e155b609b1ec",
+      "name": "Telegram Trigger",
+      "webhookId": "8ce26725-3854-4a6a-84c5-51114d8aebc1",
+      "credentials": {
+        "telegramApi": {
+          "id": "GDPLiNzWJUrgOT1w",
+          "name": "Bomstart RAG"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1080,
+        -40
+      ],
+      "id": "14e08120-f9f3-47f0-a202-7bd68b963822",
+      "name": "Telegram",
+      "webhookId": "7c21f318-9652-464f-b12c-67937ad82f23",
+      "credentials": {
+        "telegramApi": {
+          "id": "GDPLiNzWJUrgOT1w",
+          "name": "Bomstart RAG"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $json.message.chat.id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        -40
+      ],
+      "id": "23cbe731-5e8b-4952-89ec-55cf99a07c9d",
+      "name": "Telegram1",
+      "webhookId": "202b7d40-e2dd-465e-810d-dfc61d713fee",
+      "credentials": {
+        "telegramApi": {
+          "id": "uiq7RjsVfsDuyh2x",
+          "name": "Zul SocMed"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        -40
+      ],
+      "id": "7248b827-2ffe-4eef-afd9-13f8d6b05781",
+      "name": "Telegram2",
+      "webhookId": "b82993c8-f6da-4c15-9e24-ae1ea50e9222",
+      "credentials": {
+        "telegramApi": {
+          "id": "uiq7RjsVfsDuyh2x",
+          "name": "Zul SocMed"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "zul.malc@gmail.com",
+          "mode": "list",
+          "cachedResultName": "zul.malc@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Attendees', ``, 'string') }}",
+            "zul.malc@gmail.com"
+          ],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        200
+      ],
+      "id": "14316bd4-92a7-4765-bb0d-db0549edcdd0",
+      "name": "Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "3kSq4cXgyM0AoOjQ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        940,
+        200
+      ],
+      "id": "29880937-9d4a-47be-8eba-2fa4cf1b7fe1",
+      "name": "Gmail",
+      "webhookId": "10fe3c06-247e-41dc-81fe-8d81daec72ea",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hptm08g2cnXLrqRZ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram2": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1dae5ca0-643b-4ac0-9803-0be904896d0b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26eab052ee485494e8bc1c42039419456163d795294cb2611baeb7b14d8d10ac"
+  },
+  "id": "JUqMyzqdHnVwRqBm",
+  "tags": [
+    {
+      "createdAt": "2025-04-14T06:13:21.034Z",
+      "updatedAt": "2025-04-14T06:13:21.034Z",
+      "id": "rYerDOtuyCWzm9dV",
+      "name": "onlinecourse"
+    }
+  ]
+}
