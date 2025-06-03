@@ -1,0 +1,302 @@
+{
+  "name": "OC | Bomstart RAG Guna Whatsapp",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on user input: {{ $json.messages[0].text.body }}, please generate a friendly, accurate, concise response.\n\nIf unsure, search the vector store via the `onlinecourse` tool for more context.\n\nRules: \n- If the user asked in malay, reply must be in malay but make it mix malay-english malaysian style.\n",
+        "options": {
+          "systemMessage": "You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        400,
+        -40
+      ],
+      "id": "efafa18f-e149-4e14-965c-b43a3a7df1ab",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        200
+      ],
+      "id": "46b8b741-4219-4559-97e5-418be2278bb3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.messages[0].text.body }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        200
+      ],
+      "id": "75844965-b268-49aa-b834-e868012f6c7c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "name": "onlinecourse",
+        "description": "Call this tool to access information on pinecone to answer user question"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        560,
+        180
+      ],
+      "id": "1ce2dcd5-f51f-4552-a3e0-eb883e94547d",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "onlinecourse",
+          "mode": "list",
+          "cachedResultName": "onlinecourse"
+        },
+        "options": {
+          "pineconeNamespace": "onlinecourse"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        360
+      ],
+      "id": "999d653d-b02f-4aee-a3c8-105dca747f8c",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "N6r9cn4DbeJDuAJv",
+          "name": "PineconeApi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        520
+      ],
+      "id": "f2d79dbf-5639-400d-8ffe-c9b2885b2d5a",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        360
+      ],
+      "id": "40059833-9249-4c3b-a9a0-135f4f9af0ef",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qiJsG7QNXxS5rP5w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -40
+      ],
+      "id": "2bc317ec-9db5-46d5-bff3-d13cc058ace4",
+      "name": "WhatsApp Trigger",
+      "webhookId": "67b9b7dd-24f8-431f-ab9a-917b80f3c633",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "QZusLFbNchLbSvUj",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "375534145651713",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        940,
+        -40
+      ],
+      "id": "a36b36ac-0262-457e-97fb-326d7d93a9ea",
+      "name": "WhatsApp Business Cloud",
+      "webhookId": "6ee9a48f-fafa-448c-8f43-692a8ddd8ac0",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "6hEeHUhLbTpQnSZR",
+          "name": "WhatsApp account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Business Cloud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "620d6afd-3ef7-44a5-a25b-1d3f79e2c997",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26eab052ee485494e8bc1c42039419456163d795294cb2611baeb7b14d8d10ac"
+  },
+  "id": "eRfz43di420LduyR",
+  "tags": [
+    {
+      "createdAt": "2025-04-14T06:13:21.034Z",
+      "updatedAt": "2025-04-14T06:13:21.034Z",
+      "id": "rYerDOtuyCWzm9dV",
+      "name": "onlinecourse"
+    }
+  ]
+}
